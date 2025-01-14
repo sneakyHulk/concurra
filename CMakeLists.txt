@@ -8,7 +8,6 @@ find_package(TBB REQUIRED)
 
 add_library(${PROJECT_NAME} SHARED src/Node.cpp src/Pusher.cpp src/Processor.cpp src/ src/Runner.cpp src/RunnerSynchronous.cpp src/RunnerSynchronousPair.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_include_directories(${PROJECT_NAME} PRIVATE ${TBB_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PUBLIC TBB::tbb)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
 
