@@ -84,14 +84,19 @@ class Processor : public Node {
 				std::shared_ptr<Input const> item;
 				asynchronous_queue.pop(item);
 
-				synchronous_call_once(*item);
+				try {
+					synchronous_call_once(*item);
+				} catch (...) {
+				}
 			}
 
 			while (!stop_token.stop_requested()) {
 				std::shared_ptr<Input const> item;
 				asynchronous_queue.pop(item);
-
-				synchronous_call(*item);
+				try {
+					synchronous_call(*item);
+				} catch (...) {
+				}
 			}
 		});
 	}
