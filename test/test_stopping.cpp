@@ -142,7 +142,7 @@ class PUSHER : public NODE {
 			});
 	}
 
-	 ~PUSHER() = default;
+	~PUSHER() = default;
 
 	virtual RETURN_VALUE push_first(OUTPUT& output) { return push(output); }
 	virtual RETURN_VALUE push(OUTPUT& output) = 0;
@@ -194,22 +194,52 @@ class PUSHER : public NODE {
 // 	bool stop_requested() { return stop_source.stop_requested(); }
 // };
 
-class t1 {
+#include <tbb/concurrent_queue.h>
 
-   public:
-	~t1() {
-		std::cout << "~t1()" << std::endl;
-	}
-};
+#include <chrono>
 
-class t2 : public t1 {
+template <typename T>
+class QueueThread : public std::thread {
+	tbb::concurrent_bounded_queue<T>& queue;
    public:
-	~t2() {
-		std::cout << "~t2()" << std::endl;
+	QueueThread(tbb::concurrent_bounded_queue<T>& queue) : queue(std::forward<decltype(queue)>(queue)) {}
+
+	~QueueThread() {
+		queue.size()
+		queue.abort()
 	}
 };
 
 int main() {
+	tbb::concurrent_bounded_queue<int> q;
+	q.set_capacity(2);
+
+	std::jthread jt([&q]() {
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		q.abort();
+	});
+
+	try {
+		int j;
+		q.pop(j);
+	} catch (std::exception const& e) {
+		std::cout << e.what() << std::endl;
+	} catch (...) {
+		std::cout << "hi" << std::endl;
+	}
+}
+
+class t1 {
+   public:
+	~t1() { std::cout << "~t1()" << std::endl; }
+};
+
+class t2 : public t1 {
+   public:
+	~t2() { std::cout << "~t2()" << std::endl; }
+};
+
+int main2() {
 	t2 t22;
 	tuple_part_from_parameter_pack<0, 2, double, int> x;
 	std::get<0>(x) = 0.1;
@@ -227,6 +257,8 @@ int main() {
 	std::tuple<> const i;
 	std::tuple<double, int, int> o;
 	t.function(i, o);
+
+	return 0;
 }
 
 // template <std::size_t split, std::size_t... I, typename... INPUTS_OUTPUT>

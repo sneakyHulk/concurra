@@ -93,13 +93,16 @@ class Processor : public Node {
 			while (!stop_token.stop_requested()) {
 				std::shared_ptr<Input const> item;
 				asynchronous_queue.pop(item);
+
+				asynchronous_queue.abort();
+
 				try {
 					synchronous_call(*item);
 				} catch (...) {
 				}
 			}
 
-			std::cout << typeid(*this).name() << " finished!";
+			std::cout << typeid(*this).name() << " finished!" << std::endl;
 		});
 	}
 

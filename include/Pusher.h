@@ -84,7 +84,7 @@ class Pusher : public Node {
 				}
 			}
 
-			std::cout << typeid(*this).name() << " finished!";
+			std::cout << typeid(*this).name() << " finished!" << std::endl;
 		});
 	}
 
