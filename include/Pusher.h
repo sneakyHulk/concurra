@@ -83,6 +83,8 @@ class Pusher : public Node {
 				} catch (...) {
 				}
 			}
+
+			std::cout << typeid(*this).name() << " finished!";
 		});
 	}
 
