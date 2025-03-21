@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 
+set(CMAKE_CXX_STANDARD 23)
 project(concurra)
 
 ########## find local packages #########################################################################################
@@ -26,6 +27,10 @@ target_compile_features(test_skip PUBLIC cxx_std_23)
 add_executable(test_skip_once test/test_skip_once.cpp)
 target_link_libraries(test_skip_once PUBLIC ${PROJECT_NAME})
 target_compile_features(test_skip_once PUBLIC cxx_std_23)
+
+add_executable(test_stopping test/test_stopping.cpp)
+target_link_libraries(test_stopping PUBLIC ${PROJECT_NAME})
+target_compile_features(test_stopping PUBLIC cxx_std_23)
 
 add_test(NAME ctest_runner_synchronous_pair COMMAND test_runner_synchronous_pair WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 add_test(NAME test_skip COMMAND test_skip WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
