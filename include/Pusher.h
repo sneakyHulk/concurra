@@ -71,11 +71,17 @@ class Pusher : public Node {
 			stop_token = _stop_token;
 
 			if (!stop_token.stop_requested()) {
-				synchronous_call_once();
+				try {
+					synchronous_call_once();
+				} catch (...) {
+				}
 			}
 
 			while (!stop_token.stop_requested()) {
-				synchronous_call();
+				try {
+					synchronous_call();
+				} catch (...) {
+				}
 			}
 		});
 	}

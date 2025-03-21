@@ -23,5 +23,10 @@ add_executable(test_skip test/test_skip.cpp)
 target_link_libraries(test_skip PUBLIC ${PROJECT_NAME})
 target_compile_features(test_skip PUBLIC cxx_std_23)
 
+add_executable(test_skip_once test/test_skip_once.cpp)
+target_link_libraries(test_skip_once PUBLIC ${PROJECT_NAME})
+target_compile_features(test_skip_once PUBLIC cxx_std_23)
+
 add_test(NAME ctest_runner_synchronous_pair COMMAND test_runner_synchronous_pair WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 add_test(NAME test_skip COMMAND test_skip WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+add_test(NAME test_skip_once COMMAND test_skip_once WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
