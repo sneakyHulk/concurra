@@ -8,6 +8,7 @@
 #include <thread>
 
 #include "Node.h"
+#include "StoppableThread.h"
 
 /**
  * @class Runner
@@ -38,8 +39,13 @@ class Runner : public Node {
 	 */
 	tbb::concurrent_bounded_queue<std::shared_ptr<Input const>> asynchronous_queue;
 
+	std::atomic_bool _stop_requested = false;
+
    protected:
-	std::stop_token stop_token;
+	void request_stop() {
+		if (!_stop_requested.exchange(true)) asynchronous_queue.push(std::shared_ptr<Input const>(nullptr));
+	}
+	bool stop_requested() { return _stop_requested; }
 
    public:
 	/**
@@ -48,26 +54,33 @@ class Runner : public Node {
 	 * that destroyed synchronous client.
 	 * @return The thread used for running the Runner node asynchronously.
 	 */
-	[[nodiscard("The thread would stop immediately!")]] [[maybe_unused]] std::jthread operator()() {
-		return std::jthread([this](std::stop_token const& _stop_token) {
-			stop_token = _stop_token;
+	[[nodiscard("The thread would stop immediately!")]] [[maybe_unused]] StoppableThread operator()() {
+		return StoppableThread([this] { request_stop(); },
+		    [this] {
+			    std::shared_ptr<Input const> item;
 
-			if (!stop_token.stop_requested()) {
-				std::shared_ptr<Input const> item;
-				asynchronous_queue.pop(item);
+			    asynchronous_queue.pop(item);
 
-				synchronous_call_once(*item);
-			}
+			    if (item) {
+				    try {
+					    synchronous_call_once(*item);
+				    } catch (...) {
+				    }
 
-			while (!stop_token.stop_requested()) {
-				std::shared_ptr<Input const> item;
-				asynchronous_queue.pop(item);
+				    while (true) {
+					    asynchronous_queue.pop(item);
 
-				synchronous_call(*item);
-			}
+					    if (!item) break;
 
-			std::cout << typeid(*this).name() << " finished!" << std::endl;
-		});
+					    try {
+						    synchronous_call(*item);
+					    } catch (...) {
+					    }
+				    }
+			    }
+
+			    std::cout << typeid(*this).name() << " finished!" << std::endl;
+		    });
 	}
 
    private:

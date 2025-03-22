@@ -56,8 +56,11 @@ class Pusher : public Node {
 	 */
 	std::vector<std::function<void(std::shared_ptr<Output const>)>> asynchronous_functions;
 
+	std::atomic_bool _stop_requested = false;
+
    protected:
-	std::stop_token stop_token;
+	void request_stop() { _stop_requested.exchange(true); }
+	bool stop_requested() { return _stop_requested.load(); }
 
    public:
 	/**
@@ -66,26 +69,25 @@ class Pusher : public Node {
 	 * that destroyed synchronous client.
 	 * @return The thread used for running the Pusher node asynchronously.
 	 */
-	[[nodiscard("The thread would stop immediately!")]] std::jthread operator()() {
-		return std::jthread([this](std::stop_token const& _stop_token) {
-			stop_token = _stop_token;
+	[[nodiscard("The thread would stop immediately!")]] StoppableThread operator()() {
+		return StoppableThread([this] { request_stop(); },
+		    [this] {
+			    if (!stop_requested()) {
+				    try {
+					    synchronous_call_once();
+				    } catch (...) {
+				    }
 
-			if (!stop_token.stop_requested()) {
-				try {
-					synchronous_call_once();
-				} catch (...) {
-				}
-			}
+				    while (!stop_requested()) {
+					    try {
+						    synchronous_call();
+					    } catch (...) {
+					    }
+				    }
+			    }
 
-			while (!stop_token.stop_requested()) {
-				try {
-					synchronous_call();
-				} catch (...) {
-				}
-			}
-
-			std::cout << typeid(*this).name() << " finished!" << std::endl;
-		});
+			    std::cout << typeid(*this).name() << " finished!" << std::endl;
+		    });
 	}
 
 	/**

@@ -51,9 +51,9 @@ template <std::size_t I0, std::size_t I1, typename... T>
 using tuple_part_from_parameter_pack = tuple_part_from_parameter_pack_helper1<I0, I1, std::make_index_sequence<sizeof...(T)>, T...>::type;
 
 template <std::size_t split, typename... INPUTS_OUTPUTS>
-class Node {
+class Node2 {
    public:
-	Node() = default;
+	Node2() = default;
 	bool function(tuple_part_from_parameter_pack<0, split, INPUTS_OUTPUTS...> const& inputs, tuple_part_from_parameter_pack<split, sizeof...(INPUTS_OUTPUTS), INPUTS_OUTPUTS...>& outputs) {
 		std::cout << "HI" << std::endl;
 
@@ -63,7 +63,7 @@ class Node {
 	void connect();
 };
 
-enum class RETURN_VALUE { CONTINUE, SKIP, LAST, STOP, ERROR };
+enum class RETURN_VALUE { CONTINUE, SKIP, LAST, STOP, ERROR, EMPTY };
 enum class INFO { NORMAL, FIRST, LAST };
 
 class NODE {
@@ -198,35 +198,69 @@ class PUSHER : public NODE {
 
 #include <chrono>
 
-template <typename T>
-class QueueThread : public std::thread {
-	tbb::concurrent_bounded_queue<T>& queue;
-   public:
-	QueueThread(tbb::concurrent_bounded_queue<T>& queue) : queue(std::forward<decltype(queue)>(queue)) {}
+#include "StoppableThread.h"
+#include "Processor.h"
 
-	~QueueThread() {
-		queue.size()
-		queue.abort()
-	}
-};
+void test222(std::shared_ptr<int*>& t) { t = std::make_shared<int*>(); }
+tbb::concurrent_bounded_queue<std::shared_ptr<int>> q;
+
+void testtet() { q.push(std::shared_ptr<int>(nullptr)); }
 
 int main() {
-	tbb::concurrent_bounded_queue<int> q;
-	q.set_capacity(2);
+	q.set_capacity(100);
 
-	std::jthread jt([&q]() {
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-		q.abort();
-	});
+	auto test = std::shared_ptr<int*>(nullptr);
+	auto test22 = test;
 
-	try {
-		int j;
-		q.pop(j);
-	} catch (std::exception const& e) {
-		std::cout << e.what() << std::endl;
-	} catch (...) {
-		std::cout << "hi" << std::endl;
+	test222(test);
+
+	if (test22 && !test) {
+		throw;
 	}
+
+	int* i = nullptr;
+	auto test2 = std::make_shared<int*>(i);
+
+	std::cout << test << std::endl;
+	std::cout << test2 << std::endl;
+
+	StoppableThread queueThread(
+	    testtet,
+	    [](int i) {
+		    while (true) {
+			    std::shared_ptr<int> j;
+			    q.pop(j);
+
+			    if (!j) break;
+
+			    std::cout << *j << std::endl;
+		    }
+
+		    std::cout << "hi" << std::endl;
+	    },
+	    2);
+
+	q.push(std::make_shared<int>());
+	q.push(std::make_shared<int>());
+	q.push(std::make_shared<int>());
+
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+	// std::thread jt([&q]() {
+	// 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	// 	// q.abort();
+	// });
+
+	// jt.join();
+
+	// try {
+	//	int j;
+	//	q.pop(j);
+	// } catch (std::exception const& e) {
+	//	std::cout << e.what() << std::endl;
+	// } catch (...) {
+	//	std::cout << "hi" << std::endl;
+	// }
 }
 
 class t1 {
@@ -246,7 +280,7 @@ int main2() {
 	std::cout << std::get<0>(x) << std::endl;
 	std::cout << std::get<1>(x) << std::endl;
 
-	Node<0, double, int, int> t;
+	Node2<0, double, int, int> t;
 
 	std::cout << std::boolalpha << std::is_same_v<tuple_part_from_parameter_pack<0, 2, double, int>, std::tuple<double, int>> << std::endl;
 
