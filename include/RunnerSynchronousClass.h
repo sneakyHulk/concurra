@@ -1,5 +1,7 @@
 #pragma once
 
+#include <type_traits>
+
 #include "RunnerSynchronous.h"
 #include "function_traits_helper.h"
 

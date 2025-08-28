@@ -2,6 +2,7 @@
 
 #include "Runner.h"
 #include "function_traits_helper.h"
+#include <type_traits>
 
 template <typename Type>
 class RunnerClass final : public Type, public Runner<std::remove_cvref_t<typename function_traits<decltype(&Type::run)>::template arg<0>>> {
